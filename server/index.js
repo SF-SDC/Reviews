@@ -65,6 +65,28 @@ app.get('/reviews/meta', (req, res) => {
     .catch((err) => res.status(500).send(err.body));
 });
 
+app.post('/reviews', (req, res) => {
+
+});
+
+app.put('/reviews/:review_id/helpful', (req, res) => {
+  console.log(req.params);
+  db.markHelpful(req.params.review_id)
+    .then(() => {
+      res.status(204).send();
+    })
+    .catch((err) => res.status(500).send(err.body));
+});
+
+app.put('/reviews/:review_id/report', (req, res) => {
+  console.log(req.params);
+  db.reportReview(req.params.review_id)
+    .then(() => {
+      res.status(204).send();
+    })
+    .catch((err) => res.status(500).send(err.body));
+});
+
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
 });

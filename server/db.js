@@ -24,7 +24,7 @@ take complexity out of the queries and into the server
 */
 const getReviews = (productId) => pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
 (SELECT ARRAY (SELECT to_json(X) FROM (SELECT id,url FROM reviews_photos WHERE reviews_photos.review_id =ANY(SELECT reviews_photos.review_id FROM reviews_photos WHERE reviews_photos.review_id = reviews.id)) AS X) AS photos)
-FROM reviews WHERE product_id = ${productId}`);
+FROM reviews WHERE product_id = ${productId} AND reported = false`);
 
 const getMetaData = (productId) => {
   // get objects here and then add them with keys...
@@ -56,22 +56,28 @@ const getMetaData = (productId) => {
   FROM characteristic_reviews
   WHERE review_id = ANY(SELECT id AS reviews_id FROM reviews WHERE product_id = ${productId})
   GROUP BY characteristic_id
-  ORDER BY AVG(value)
+  ORDER BY characteristic_id DESC
   ) t`));
 
   //grab all names from characteristics table
 
-  promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId}`));
+  promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
 
   return Promise.all(promises);
 };
 const addAReview = () => {
-
 };
 
-const markHelpful = () => pool.query('');
+const markHelpful = (reviewId) => pool.query(`UPDATE reviews
+SET recommend = NOT recommend
+WHERE id = ${reviewId}`);
 
-const reportReview = () => pool.query('');
+const reportReview = (reviewId) => pool.query(`UPDATE reviews
+SET reported = TRUE
+WHERE id = ${reviewId}`);
 
 module.exports.getReviews = getReviews;
 module.exports.getMetaData = getMetaData;
+module.exports.addAReview = addAReview;
+module.exports.markHelpful = markHelpful;
+module.exports.reportReview = reportReview;
