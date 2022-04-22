@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -7,21 +8,7 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
 });
-/*
-challenges so far,  timestamp, ANY, running subquery on multiple rows to get the photos for the individual rows
-I got caught trying to find photos for the products not the reviews
-fixed, then caught on finding photos for products with multiple reviews
-then caught on appeneding the right photos to each review
 
-challenge: how to count different values in the same column
-use count + aliases
-
-if it works its going to be way easier to just
-pull the data from queries and format on the server
-
-versus this monstrosity of a sql statement
-take complexity out of the queries and into the server
-*/
 const getReviews = (productId) => pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
 (SELECT ARRAY (SELECT to_json(X) FROM (SELECT id,url FROM reviews_photos WHERE reviews_photos.review_id =ANY(SELECT reviews_photos.review_id FROM reviews_photos WHERE reviews_photos.review_id = reviews.id)) AS X) AS photos)
 FROM reviews WHERE product_id = ${productId} AND reported = false`);
@@ -59,13 +46,38 @@ const getMetaData = (productId) => {
   ORDER BY characteristic_id DESC
   ) t`));
 
-  //grab all names from characteristics table
+  // grab all names from characteristics table
 
   promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
 
   return Promise.all(promises);
 };
-const addAReview = () => {
+const addAReview = (newReview) => {
+  const {
+    product_id, rating, date, summary, body, recommend, name, email, photos, characteristics,
+  } = newReview;
+
+  return pool.query(`INSERT INTO reviews ("product_id", "rating", "date", "summary", "body", "recommend", "reported", "reviewer_name", "reviewer_email", "response", "helpfulness") VALUES('${product_id}', '${rating}', '${date}', '${summary}', '${body}', '${recommend}', 'false', '${name}', '${email}', 'null', '0') `)
+    .then(() => {
+    // retrieve reviewID and insert photos into photos table
+      pool.query('SELECT max(id) FROM reviews')
+        .then((data) => {
+          const reviewId = data.rows[0].max;
+          const promises = [];
+          photos.forEach((photo) => {
+            promises.push(pool.query(`INSERT INTO reviews_photos ("review_id", "url") VALUES('${reviewId}', '${photo}' )`));
+          });
+
+          // update review characteristics table
+          // need reviewId, characteristicID, and value
+          // we have review ID. we have the value, we need characteristicsID
+          const getIds = Object.entries(characteristics);
+          getIds.forEach((characteristic) => promises.push(pool.query(`SELECT * FROM characteristics WHERE product_id = '${product_id}' AND name LIKE '${characteristic[0]}'`)
+            .then((chars) => pool.query(`INSERT INTO characteristic_reviews("characteristic_id", "review_id", "value") VALUES('${chars.rows[0].id}', '${reviewId}', '${characteristic[1]}')`))));
+
+          Promise.all(promises);
+        });
+    });
 };
 
 const markHelpful = (reviewId) => pool.query(`UPDATE reviews
