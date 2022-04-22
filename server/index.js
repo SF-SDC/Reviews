@@ -36,12 +36,29 @@ app.get('/reviews/meta', (req, res) => {
   const productId = req.query.product_id || '';
   db.getMetaData(productId)
     .then((data) => {
-      console.log();
+      const characteristicsObject = {};
+      // return a characteristics object with proper keu names
+      Object.entries(data[2].rows[0].weightedcharacteristics).forEach((row) => {
+        data[3].rows.forEach((characteristic) => {
+          const { id, name } = characteristic;
+          if (id === Number(row[0]) && typeof characteristicsObject.name === 'undefined') {
+            // eslint-disable-next-line prefer-destructuring
+            characteristicsObject[name] = {
+              id,
+              value: row[1].toFixed(3),
+            };
+          }
+        });
+      });
+
       const response = {
         product_id: productId,
         ratings: data[0].rows[0].ratings || {},
-        recommended: data[1].rows,
-        characteristics: data[2].rows,
+        recommended: {
+          0: data[1].rows[0].recommended.true,
+          1: data[1].rows[0].recommended.false,
+        } || {},
+        characteristics: characteristicsObject || {},
       };
       res.status(200).send(response);
     })
