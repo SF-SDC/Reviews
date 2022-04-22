@@ -67,20 +67,10 @@ app.get('/reviews/meta', (req, res) => {
 
 app.post('/reviews', (req, res) => {
   db.addAReview(req.body)
-    // .then(() => {
-    //   res.status(201).send();
-    // })
-    // .catch((err) => res.status(500).send(err.body));
-
-
-    //challenge converting id column into auto-incrementing sequence
-    /*
-----create sequence reviews_id_seq START WITH MAX(reviews.id)
-----   owned by reviews.id;
-----SELECT SETVAL('reviews_id_seq', (select max(id) from reviews), false)
--   -ALTER TABLE reviews ALTER COLUMN id SET DEFAULT nextval('reviews_id_seq');
-
-    */
+    .then(() => {
+      res.status(201).send();
+    })
+    .catch((err) => res.status(500).send(err.body));
 });
 
 app.put('/reviews/:review_id/helpful', (req, res) => {
