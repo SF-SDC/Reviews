@@ -8,10 +8,15 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
 });
-
-const getReviews = (productId) => pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
+// TODO FIX PAGES AND SORTING ADD TESTS CONNECT TO FRONT END
+const sortOptions = ['newest', 'helpful', 'relevant'];
+const getReviews = (productId, min, max, sort = 'id') => {
+  console.log(sortOptions.includes(sort.toLowerCase()));
+  return pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
 (SELECT ARRAY (SELECT to_json(X) FROM (SELECT id,url FROM reviews_photos WHERE reviews_photos.review_id =ANY(SELECT reviews_photos.review_id FROM reviews_photos WHERE reviews_photos.review_id = reviews.id)) AS X) AS photos)
-FROM reviews WHERE product_id = ${productId} AND reported = false`);
+FROM reviews WHERE product_id = ${productId} AND reported = false
+ORDER BY ${sortOptions.includes(sortOptions.includes(sort.toLowerCase())) ? sort : 'id'} ASC`);
+};
 
 const getMetaData = (productId) => {
   // get objects here and then add them with keys...
