@@ -8,14 +8,21 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
 });
-// TODO FIX PAGES AND SORTING ADD TESTS CONNECT TO FRONT END
-const sortOptions = ['newest', 'helpful', 'relevant'];
 const getReviews = (productId, min, max, sort = 'id') => {
-  console.log(sortOptions.includes(sort.toLowerCase()));
+  let order = sort;
+  if (sort === 'helpful') {
+    order = 'helpfulness';
+  } else if (sort === 'newest') {
+    order = 'date';
+  } else if (sort === 'relevant') {
+    order = 'recommend';
+  } else {
+    order = 'id';
+  }
   return pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
 (SELECT ARRAY (SELECT to_json(X) FROM (SELECT id,url FROM reviews_photos WHERE reviews_photos.review_id =ANY(SELECT reviews_photos.review_id FROM reviews_photos WHERE reviews_photos.review_id = reviews.id)) AS X) AS photos)
 FROM reviews WHERE product_id = ${productId} AND reported = false
-ORDER BY ${sortOptions.includes(sortOptions.includes(sort.toLowerCase())) ? sort : 'id'} ASC`);
+ORDER BY ${order} DESC`);
 };
 
 const getMetaData = (productId) => {
@@ -64,7 +71,6 @@ const addAReview = (newReview) => {
 
   return pool.query(`INSERT INTO reviews ("product_id", "rating", "date", "summary", "body", "recommend", "reported", "reviewer_name", "reviewer_email", "response", "helpfulness") VALUES('${product_id}', '${rating}', '${date}', '${summary}', '${body}', '${recommend}', 'false', '${name}', '${email}', 'null', '0') `)
     .then(() => {
-    // retrieve reviewID and insert photos into photos table
       pool.query('SELECT max(id) FROM reviews')
         .then((data) => {
           const reviewId = data.rows[0].max;
@@ -72,10 +78,6 @@ const addAReview = (newReview) => {
           photos.forEach((photo) => {
             promises.push(pool.query(`INSERT INTO reviews_photos ("review_id", "url") VALUES('${reviewId}', '${photo}' )`));
           });
-
-          // update review characteristics table
-          // need reviewId, characteristicID, and value
-          // we have review ID. we have the value, we need characteristicsID
           const getIds = Object.entries(characteristics);
           getIds.forEach((characteristic) => promises.push(pool.query(`SELECT * FROM characteristics WHERE product_id = '${product_id}' AND name LIKE '${characteristic[0]}'`)
             .then((chars) => pool.query(`INSERT INTO characteristic_reviews("characteristic_id", "review_id", "value") VALUES('${chars.rows[0].id}', '${reviewId}', '${characteristic[1]}')`))));

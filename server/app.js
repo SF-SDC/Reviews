@@ -13,19 +13,20 @@ app.get('/reviews', (req, res) => {
   const productId = req.query.product_id || '';
   let page = 0;
   let count = 5;
-  if (req.query.page && parseInt(req.query.page, 10) > 1) {
+  if (req.query.page && parseInt(req.query.page, 10) > 0) {
     page = parseInt(req.query.page, 10) - 1;
   }
   if (req.query.count && parseInt(req.query.count, 10) > 0) {
     count = parseInt(req.query.count, 10);
   }
+
   db.getReviews(productId, (page * count), (page * count) + count + 1, sort)
     .then((data) => {
       const response = {
         product_id: productId,
         page: req.query.page,
         count: req.query.count,
-        results: data.rows,
+        results: data.rows.slice((page * count), (page * count) + count),
       };
       res.status(200).send(response);
     })
