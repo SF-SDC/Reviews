@@ -1,0 +1,24 @@
+config:
+  target: "http://127.0.0.1:4005"
+  http:
+    pool: 2000
+  phases:
+    - duration: 20
+      arrivalRate: 10
+      name: increase (10 per sec)
+    - duration: 20
+      arrivalRate: 100
+      name: heavy (100 per sec)
+    - duration: 20
+      arrivalRate: 1000
+      name: extreme (1000 per sec)
+    - duration: 20
+      arrivalRate: 1200
+      name: extreme (1200 per sec)
+
+
+scenarios:
+  - name: 'Get reviews'
+    flow:
+      - get:
+          url: '/reviews?page={{ $randomNumber (100000, 200000)}}'

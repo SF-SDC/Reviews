@@ -1,2 +1,5 @@
+node_modules
+coverage
+package-lock.json
 .env
-node_modules/
+dist/bundle.js

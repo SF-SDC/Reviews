@@ -1,0 +1,46 @@
+config:
+  target: "http://127.0.0.1:4005"
+  fields:
+        - "product_id"
+        - "date"
+        - "summary"
+        - "body"
+        - "recommend"
+        - "name"
+        - "email"
+        - "photos"
+        - "characteristics"
+        - "rating"
+
+  http:
+    pool: 2000
+  phases:
+    - duration: 20
+      arrivalRate: 10
+      name: increase (10 per sec)
+    - duration: 20
+      arrivalRate: 100
+      name: heavy (100 per sec)
+    - duration: 20
+      arrivalRate: 1000
+      name: extreme (1000 per sec)
+    - duration: 20
+      arrivalRate: 1200
+      name: extreme (1200 per sec)
+
+
+scenarios:
+  - name: 'Get reviews'
+    flow:
+      - post:
+          url: '/reviews'
+          json:
+              product_id: 66642
+              rating: "{{ $randomNumber(1,5) }}"
+              summary: "{{ $randomString() }}"
+              body: "{{ $randomString() }}"
+              recommend: FALSE
+              name: "{{ $randomString() }}"
+              email: "{{ $randomString() }}"
+              photos: [ "{{ $randomString() }}"]
+              characteristics: { '222774': "{{ $randomNumber(1,5) }}", '222775': "{{ $randomNumber(1,5) }}", '222776': "{{ $randomNumber(1,5) }}", '222777': "{{ $randomNumber(1,5) }}" }
