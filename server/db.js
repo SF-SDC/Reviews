@@ -108,7 +108,7 @@ const addAReview = (newReview) => {
     product_id, rating, date, summary, body, recommend, name, email, photos, characteristics,
   } = newReview;
 
-  return pool.query(`INSERT INTO reviews ("product_id", "rating", "date", "summary", "body", "recommend", "reported", "reviewer_name", "reviewer_email", "response", "helpfulness") VALUES('${product_id}', '${rating}', '${date}', '${summary}', '${body}', '${recommend}', 'false', '${name}', '${email}', 'null', '0') `)
+  return pool.query(`INSERT INTO reviews ("product_id", "rating", "date", "summary", "body", "recommend", "reported", "reviewer_name", "reviewer_email", "response", "helpfulness") VALUES('${product_id}', '${rating}', '${Date.now()}', '${summary}', '${body}', '${recommend}', 'false', '${name}', '${email}', 'null', '0') `)
     .then(() => {
       pool.query('SELECT max(id) FROM reviews')
         .then((data) => {
