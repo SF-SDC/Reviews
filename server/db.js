@@ -19,17 +19,60 @@ const getReviews = (productId, min, max, sort = 'id') => {
   } else {
     order = 'id';
   }
-  return pool.query(`SELECT id AS review_id, reviews.rating, reviews.summary, reviews.recommend, reviews.response,reviews.body,TO_CHAR((TO_TIMESTAMP(reviews.date::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,reviews.reviewer_name,reviews.helpfulness,
-(SELECT ARRAY (SELECT to_json(X) FROM (SELECT id,url FROM reviews_photos WHERE reviews_photos.review_id =ANY(SELECT reviews_photos.review_id FROM reviews_photos WHERE reviews_photos.review_id = reviews.id)) AS X) AS photos)
-FROM reviews WHERE product_id = ${productId} AND reported = false
-ORDER BY ${order} DESC`);
+  return pool.query(`SELECT
+  id AS review_id,
+  reviews.rating,
+  reviews.summary,
+  reviews.recommend,
+  reviews.response,
+  reviews.body,
+  TO_CHAR((TO_TIMESTAMP(1589663264078::double precision / 1000)), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS date,
+  reviews.reviewer_name,
+  reviews.helpfulness,
+  (
+     SELECT
+        ARRAY (
+        SELECT
+           to_json(X)
+        FROM
+           (
+              SELECT
+                 id,
+                 url
+              FROM
+                 reviews_photos
+              WHERE
+                 reviews_photos.review_id = ANY(
+                 SELECT
+                    reviews_photos.review_id
+                 FROM
+                    reviews_photos
+                 WHERE
+                    reviews_photos.review_id = reviews.id)
+           )
+           AS X) AS photos
+  )
+FROM
+  reviews
+WHERE
+  product_id = ${productId}
+  AND reported = false
+  ORDER BY ${order} DESC`)
+    .then((data) => {
+      data.rows.map((item) => {
+        if (item.response === 'null') {
+          // eslint-disable-next-line no-param-reassign
+          item.response = '';
+          return item;
+        }
+        return item;
+      });
+      return data;
+    });
 };
 
 const getMetaData = (productId) => {
-  // get objects here and then add them with keys...
-  // body data
   const promises = [];
-  // query for just ratings
   promises.push(pool.query(`SELECT json_object_agg(t.rating,t.count) AS ratings
   FROM (
   SELECT rating, COUNT(*) as count
@@ -37,7 +80,7 @@ const getMetaData = (productId) => {
   WHERE reviews.product_id = ${productId}
   GROUP BY rating) AS t
   `));
-  // query for just recommended
+
   promises.push(pool.query(`SELECT json_object_agg(t.recommend,t.recommend_count) AS recommended
   FROM(
   SELECT recommend, count(recommend) AS recommend_count
@@ -46,9 +89,7 @@ const getMetaData = (productId) => {
   GROUP BY recommend
   ORDER BY recommend DESC
   ) t`));
-  // query for characteristics we get the name and id
-  // value: a query for aggregate value from all reviews
-  //
+
   promises.push(pool.query(`SELECT json_object_agg(t.characteristic_id,t.avg) AS weightedCharacteristics
   FROM(
   SELECT characteristic_id, AVG(value)
@@ -57,8 +98,6 @@ const getMetaData = (productId) => {
   GROUP BY characteristic_id
   ORDER BY characteristic_id DESC
   ) t`));
-
-  // grab all names from characteristics table
 
   promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
 
@@ -79,7 +118,7 @@ const addAReview = (newReview) => {
             promises.push(pool.query(`INSERT INTO reviews_photos ("review_id", "url") VALUES('${reviewId}', '${photo}' )`));
           });
           const getIds = Object.entries(characteristics);
-          getIds.forEach((characteristic) => promises.push(pool.query(`SELECT * FROM characteristics WHERE product_id = '${product_id}' AND name LIKE '${characteristic[0]}'`)
+          getIds.forEach((characteristic) => promises.push(pool.query(`SELECT * FROM characteristics WHERE product_id = '${product_id}' AND id = '${characteristic[0]}'`)
             .then((chars) => pool.query(`INSERT INTO characteristic_reviews("characteristic_id", "review_id", "value") VALUES('${chars.rows[0].id}', '${reviewId}', '${characteristic[1]}')`))));
 
           Promise.all(promises);
@@ -88,7 +127,7 @@ const addAReview = (newReview) => {
 };
 
 const markHelpful = (reviewId) => pool.query(`UPDATE reviews
-SET recommend = NOT recommend
+SET helpfulness = helpfulness + 1
 WHERE id = ${reviewId}`);
 
 const reportReview = (reviewId) => pool.query(`UPDATE reviews

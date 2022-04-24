@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const db = require('./db');
 require('dotenv').config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -40,19 +42,20 @@ app.get('/reviews/meta', (req, res) => {
     .then((data) => {
       const characteristicsObject = {};
       // return a characteristics object with proper keu names
-      Object.entries(data[2].rows[0].weightedcharacteristics).forEach((row) => {
-        data[3].rows.forEach((characteristic) => {
-          const { id, name } = characteristic;
-          if (id === Number(row[0]) && typeof characteristicsObject.name === 'undefined') {
+      if (data[2].rows[0].weightedcharacteristics) {
+        Object.entries(data[2].rows[0].weightedcharacteristics).forEach((row) => {
+          data[3].rows.forEach((characteristic) => {
+            const { id, name } = characteristic;
+            if (id === Number(row[0]) && typeof characteristicsObject.name === 'undefined') {
             // eslint-disable-next-line prefer-destructuring
-            characteristicsObject[name] = {
-              id,
-              value: row[1].toFixed(3),
-            };
-          }
+              characteristicsObject[name] = {
+                id,
+                value: row[1].toFixed(3),
+              };
+            }
+          });
         });
-      });
-
+      }
       const response = {
         product_id: productId,
         ratings: data[0].rows[0].ratings || {},
@@ -68,6 +71,7 @@ app.get('/reviews/meta', (req, res) => {
 });
 
 app.post('/reviews', (req, res) => {
+  console.log(req.body);
   db.addAReview(req.body)
     .then(() => {
       res.status(201).send();
