@@ -8,6 +8,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/loaderio-57b1e09813b6f633b783403ce819164f.txt', (req, res) => {
+  res.status(200).send();
+});
+
 app.get('/reviews', (req, res) => {
   console.log('Request to: ', req.url, req.params);
   // TODO: account for pages,count,sort
