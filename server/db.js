@@ -85,7 +85,7 @@ const getMetaData = (productId) => {
   FROM(
   SELECT recommend, count(recommend) AS recommend_count
   FROM reviews
-  WHERE product_id = 15
+  WHERE product_id = ${productId}
   GROUP BY recommend
   ORDER BY recommend DESC
   ) t`));
@@ -100,6 +100,7 @@ const getMetaData = (productId) => {
   ) t`));
 
   promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
+
 
   return Promise.all(promises);
 };

@@ -13,7 +13,7 @@ config:
         - "rating"
 
   http:
-    pool: 2000
+    pool: 1000
   phases:
     - duration: 20
       arrivalRate: 10
