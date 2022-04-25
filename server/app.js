@@ -41,6 +41,7 @@ app.get('/reviews/meta', (req, res) => {
   db.getMetaData(productId)
     .then((data) => {
       const characteristicsObject = {};
+
       // return a characteristics object with proper keu names
       if (data[2].rows[0].weightedcharacteristics) {
         Object.entries(data[2].rows[0].weightedcharacteristics).forEach((row) => {
@@ -55,16 +56,26 @@ app.get('/reviews/meta', (req, res) => {
             }
           });
         });
+      } else {
+        const traits = data[3].rows;
+        traits.forEach((trait) => {
+          characteristicsObject[trait.name] = {
+            id: trait.id,
+            value: '0',
+          };
+        });
       }
+
       const response = {
         product_id: productId,
         ratings: data[0].rows[0].ratings || {},
-        recommended: {
+        recommended: (data[1].rows.recommend ? {
           0: data[1].rows[0].recommended.true,
           1: data[1].rows[0].recommended.false,
-        } || {},
+        }: {}),
         characteristics: characteristicsObject || {},
       };
+
       res.status(200).send(response);
     })
     .catch((err) => res.status(500).send(err.body));

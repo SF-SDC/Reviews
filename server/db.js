@@ -101,6 +101,8 @@ const getMetaData = (productId) => {
 
   promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
 
+  promises.push(pool.query(`SELECT * FROM REVIEWS WHERE product_id =${productId} `));
+
   return Promise.all(promises);
 };
 const addAReview = (newReview) => {

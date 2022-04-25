@@ -1,7 +1,7 @@
 config:
   target: "http://127.0.0.1:4005"
   http:
-    pool: 2000
+    pool: 1000
   phases:
     - duration: 20
       arrivalRate: 10
