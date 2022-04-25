@@ -1,10 +1,11 @@
 /* eslint-disable camelcase */
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const pool = new Pool({
   user: process.env.PG_USER,
-  host: 'localhost',
-  database: 'sdc',
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
 });
@@ -100,7 +101,6 @@ const getMetaData = (productId) => {
   ) t`));
 
   promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
-
 
   return Promise.all(promises);
 };
