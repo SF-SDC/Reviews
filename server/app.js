@@ -69,7 +69,7 @@ app.get('/reviews/meta', (req, res) => {
       const response = {
         product_id: productId,
         ratings: data[0].rows[0].ratings || {},
-        recommended: (data[1].rows.recommend ? {
+        recommended: (data[1].rows[0].recommended ? {
           0: data[1].rows[0].recommended.true,
           1: data[1].rows[0].recommended.false,
         }: {}),
