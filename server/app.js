@@ -14,6 +14,14 @@ app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt', (req, res) => {
   res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
 });
 
+app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea.html', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
+});
+
+app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea/', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
+});
+
 app.get('/reviews', (req, res) => {
   console.log('Request to: ', req.url, req.params);
   // TODO: account for pages,count,sort
