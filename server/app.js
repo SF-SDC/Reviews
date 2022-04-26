@@ -10,16 +10,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
-});
-
-app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea.html', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
-});
-
-app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea/', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
+app.get('/loaderio-52daed5d46f379eec3c611c3df10ddd1.txt', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, '../token.txt'));
 });
 
 app.get('/reviews', (req, res) => {
