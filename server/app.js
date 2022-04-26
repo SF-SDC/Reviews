@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, './loader/loaderio-57b1e09813b6f633b783403ce819164f.txt'));
+  res.status(200).sendFile(path.join(__dirname, '../loaderio-516ddd0d051a01c3489c8c7a0edb04ea.txt'));
 });
 
 app.get('/reviews', (req, res) => {
