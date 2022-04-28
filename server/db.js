@@ -72,41 +72,66 @@ WHERE
     });
 };
 
-const getMetaData = (productId) => {
-  const promises = [];
-  promises.push(pool.query(`SELECT json_object_agg(t.rating,t.count) AS ratings
+const getMetaData = (productId) => pool.query(`SELECT  json_agg(jbo.val) AS meta_data
+  FROM(
+  SELECT json_object_agg(t.rating,t.count) AS ratings
+    FROM (
+    SELECT rating, COUNT(*) as count
+    FROM reviews
+    WHERE reviews.product_id = ${productId}
+    GROUP BY rating) AS t
+
+    UNION ALL
+
+    SELECT json_object_agg(t.recommend,t.recommend_count) AS recommended
+    FROM(
+    SELECT recommend, count(recommend) AS recommend_count
+    FROM reviews
+    WHERE product_id = ${productId}
+    GROUP BY recommend
+    ORDER BY recommend DESC
+    ) t
+
+    UNION ALL
+
+  SELECT json_agg(z) AS weightedCharacteristics
   FROM (
-  SELECT rating, COUNT(*) as count
-  FROM reviews
-  WHERE reviews.product_id = ${productId}
-  GROUP BY rating) AS t
-  `));
+  SELECT t.* AS traits, characteristics.name FROM
+      (SELECT characteristic_reviews.characteristic_id, AVG(value)
+      FROM characteristic_reviews
+      WHERE review_id = ANY(SELECT id AS reviews_id FROM reviews WHERE product_id = ${productId})
+      GROUP BY characteristic_id
+      ORDER BY characteristic_id DESC) t
+      INNER JOIN characteristics
+      ON t.characteristic_id = characteristics.id
+      ORDER BY t.characteristic_id
+    ) z
+  ) AS jbo(val)`)
+  .then((data) => {
+    const characteristics = data.rows[0].meta_data[2];
+    if (!characteristics) {
+      pool.query(`SELECT json_agg(t) AS traits
+      FROM(SELECT * FROM characteristics where product_id = 66649 ORDER BY id ASC) t`)
+        .then((product) => {
+          const { traits } = product.rows[0];
+          const characteristicsObject = {};
+          traits.forEach((trait) => {
+            characteristicsObject[trait.name] = {
+              id: trait.id,
+              value: 0,
+            };
+          });
+          // eslint-disable-next-line no-param-reassign
+          data.rows[0].meta_data[2] = characteristicsObject;
+          return data;
+        });
+    }
+    return data;
+  });
 
-  promises.push(pool.query(`SELECT json_object_agg(t.recommend,t.recommend_count) AS recommended
-  FROM(
-  SELECT recommend, count(recommend) AS recommend_count
-  FROM reviews
-  WHERE product_id = ${productId}
-  GROUP BY recommend
-  ORDER BY recommend DESC
-  ) t`));
-
-  promises.push(pool.query(`SELECT json_object_agg(t.characteristic_id,t.avg) AS weightedCharacteristics
-  FROM(
-  SELECT characteristic_id, AVG(value)
-  FROM characteristic_reviews
-  WHERE review_id = ANY(SELECT id AS reviews_id FROM reviews WHERE product_id = ${productId})
-  GROUP BY characteristic_id
-  ORDER BY characteristic_id DESC
-  ) t`));
-
-  promises.push(pool.query(`SELECT * FROM characteristics where product_id = ${productId} ORDER BY name DESC`));
-
-  return Promise.all(promises);
-};
 const addAReview = (newReview) => {
   const {
-    product_id, rating, date, summary, body, recommend, name, email, photos, characteristics,
+    product_id, rating, summary, body, recommend, name, email, photos, characteristics,
   } = newReview;
 
   return pool.query(`INSERT INTO reviews ("product_id", "rating", "date", "summary", "body", "recommend", "reported", "reviewer_name", "reviewer_email", "response", "helpfulness") VALUES('${product_id}', '${rating}', '${Date.now()}', '${summary}', '${body}', '${recommend}', 'false', '${name}', '${email}', 'null', '0') `)
@@ -140,3 +165,7 @@ module.exports.getMetaData = getMetaData;
 module.exports.addAReview = addAReview;
 module.exports.markHelpful = markHelpful;
 module.exports.reportReview = reportReview;
+
+/*
+
+*/
