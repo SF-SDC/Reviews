@@ -54,7 +54,6 @@ app.get('/reviews/meta', (req, res) => {
       const characteristicsObject = {};
 
       if (characteristics) {
-        console.log('test');
         characteristics.forEach((trait) => {
           characteristicsObject[trait.name] = {
             id: trait.characteristic_id,
