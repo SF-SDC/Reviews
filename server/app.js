@@ -46,42 +46,32 @@ app.get('/reviews/meta', (req, res) => {
   const productId = req.query.product_id || '';
   db.getMetaData(productId)
     .then((data) => {
+      const metaData = data.rows[0].meta_data;
+      const ratings = metaData[0];
+      const recommended = metaData[1];
+      const characteristics = metaData[2];
+
       const characteristicsObject = {};
 
-      // return a characteristics object with proper keu names
-      if (data[2].rows[0].weightedcharacteristics) {
-        Object.entries(data[2].rows[0].weightedcharacteristics).forEach((row) => {
-          data[3].rows.forEach((characteristic) => {
-            const { id, name } = characteristic;
-            if (id === Number(row[0]) && typeof characteristicsObject.name === 'undefined') {
-            // eslint-disable-next-line prefer-destructuring
-              characteristicsObject[name] = {
-                id,
-                value: row[1].toFixed(3),
-              };
-            }
-          });
-        });
-      } else {
-        const traits = data[3].rows;
-        traits.forEach((trait) => {
+      if (characteristics) {
+        console.log('test');
+        characteristics.forEach((trait) => {
           characteristicsObject[trait.name] = {
-            id: trait.id,
-            value: '0',
+            id: trait.characteristic_id,
+            value: trait.avg,
           };
         });
       }
 
       const response = {
         product_id: productId,
-        ratings: data[0].rows[0].ratings || {},
-        recommended: (data[1].rows[0].recommended ? {
-          0: data[1].rows[0].recommended.true,
-          1: data[1].rows[0].recommended.false,
+        ratings: ratings || {},
+        recommended: (recommended ? {
+          true: recommended.true,
+          false: recommended.false,
         } : {}),
         characteristics: characteristicsObject || {},
       };
-
       res.status(200).send(response);
     })
     .catch((err) => res.status(500).send(err.body));
