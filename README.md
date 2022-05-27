@@ -8,8 +8,7 @@ This is Denis Truong's portion of the System Design Capstone, created by a team 
 ### ✅ **Objectives**
 
 - Apply modern Agile practices
-- Use Git workflows
-- Use modern development and deployment workflows
+- Use Git Feature Branch Workflow
 - Maintain productive team dynamics
 - Use an ETL process to manage data
 - Get familiar with Postgres
